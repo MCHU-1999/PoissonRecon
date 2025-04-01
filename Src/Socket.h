@@ -53,7 +53,8 @@ namespace PoissonRecon
 	typedef boost::asio::ip::address EndpointAddress;
 	const Socket _INVALID_SOCKET_ = (Socket)NULL;
 	const AcceptorSocket _INVALID_ACCEPTOR_SOCKET_ = (AcceptorSocket)NULL;
-	static boost::asio::io_service io_service;
+	// static boost::asio::io_service io_service;
+	static boost::asio::io_context io_service;
 
 	template< class C > int socket_receive( Socket &s , C *destination , size_t len )
 	{
@@ -75,15 +76,24 @@ namespace PoissonRecon
 	inline const char *LastSocketError( void ){ return ""; }
 	inline void PrintHostAddresses( FILE* fp )
 	{
-		boost::asio::ip::tcp::resolver resolver( io_service );
-		boost::asio::ip::tcp::resolver::query query( boost::asio::ip::host_name() , std::string( "" ) , boost::asio::ip::resolver_query_base::numeric_service );
-		boost::asio::ip::tcp::resolver::iterator iterator = resolver.resolve( query ) , end;
-		for( int count=0 ; iterator!=end ; )
-		{
-			if( (*iterator).endpoint().address().is_v4() ) fprintf( fp , "%d]  %s\n" , count++ , (*iterator).endpoint().address().to_string().c_str() );
-			//		else                                           fprintf( fp , "%d]* %s\n" , count++ , (*iterator).endpoint().address().to_string().c_str() );
-			iterator++;
+		boost::asio::ip::tcp::resolver resolver(io_service);
+		boost::asio::ip::tcp::resolver::results_type results = resolver.resolve(boost::asio::ip::host_name(), "");
+		
+		int count = 0;
+		for (const auto& entry : results) {
+			if (entry.endpoint().address().is_v4()) {
+				fprintf(fp, "%d]  %s\n", count++, entry.endpoint().address().to_string().c_str());
+			}
 		}
+		// boost::asio::ip::tcp::resolver resolver( io_service );
+		// boost_asio_query_fn::query query( boost::asio::ip::host_name() , std::string( "" ) , boost::asio::ip::resolver_query_base::numeric_service );
+		// boost::asio::ip::tcp::resolver::iterator iterator = resolver.resolve( query ) , end;
+		// for( int count=0 ; iterator!=end ; )
+		// {
+		// 	if( (*iterator).endpoint().address().is_v4() ) fprintf( fp , "%d]  %s\n" , count++ , (*iterator).endpoint().address().to_string().c_str() );
+		// 	//		else                                           fprintf( fp , "%d]* %s\n" , count++ , (*iterator).endpoint().address().to_string().c_str() );
+		// 	iterator++;
+		// }
 	}
 
 #ifdef ARRAY_DEBUG

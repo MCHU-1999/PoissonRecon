@@ -112,27 +112,50 @@ void SendOnSocket( Socket& s , Pointer( C ) data , size_t dataSize , const char*
 		ERROR_OUT( "socket_send to client failed: " , LastSocketError() );
 }
 
-inline bool GetHostEndpointAddress( EndpointAddress* address , const char* prefix )
+inline bool GetHostEndpointAddress(EndpointAddress* address, const char* prefix)
 {
-	boost::asio::ip::tcp::resolver resolver( io_service );
-	boost::asio::ip::tcp::resolver::query query( boost::asio::ip::host_name() , std::string( "" ) , boost::asio::ip::resolver_query_base::numeric_service );
-	boost::asio::ip::tcp::resolver::iterator iterator = resolver.resolve( query ) , end;
-	for( int count=0 ; iterator!=end ; )
-	{
-		if( (*iterator).endpoint().address().is_v4() )
-		{
-			std::string addrss_string = (*iterator).endpoint().address().to_string();
-			const char* _address = addrss_string.c_str();
-			if( !prefix || strstr( _address , prefix ) )
-			{
-				*address = (*iterator).endpoint().address();
-				return true;
-			}
-		}
-		iterator++;
-	}
-	return false;
+    boost::asio::io_context io_context;
+    boost::asio::ip::tcp::resolver resolver(io_context);
+    boost::asio::ip::tcp::resolver::results_type results = resolver.resolve(boost::asio::ip::host_name(), "");
+
+    for (const auto& entry : results)
+    {
+        if (entry.endpoint().address().is_v4())
+        {
+            std::string address_string = entry.endpoint().address().to_string();
+            const char* _address = address_string.c_str();
+
+            if (!prefix || strstr(_address, prefix))
+            {
+                *address = entry.endpoint().address();
+                return true;
+            }
+        }
+    }
+    return false;
 }
+
+// inline bool GetHostEndpointAddress( EndpointAddress* address , const char* prefix )
+// {
+// 	boost::asio::ip::tcp::resolver resolver( io_service );
+// 	boost::asio::ip::tcp::resolver::query query( boost::asio::ip::host_name() , std::string( "" ) , boost::asio::ip::resolver_query_base::numeric_service );
+// 	boost::asio::ip::tcp::resolver::iterator iterator = resolver.resolve( query ) , end;
+// 	for( int count=0 ; iterator!=end ; )
+// 	{
+// 		if( (*iterator).endpoint().address().is_v4() )
+// 		{
+// 			std::string addrss_string = (*iterator).endpoint().address().to_string();
+// 			const char* _address = addrss_string.c_str();
+// 			if( !prefix || strstr( _address , prefix ) )
+// 			{
+// 				*address = (*iterator).endpoint().address();
+// 				return true;
+// 			}
+// 		}
+// 		iterator++;
+// 	}
+// 	return false;
+// }
 
 inline bool GetHostAddress( char* address , const char* prefix )
 {
@@ -162,49 +185,102 @@ inline EndpointAddress GetPeerSocketEndpointAddress( Socket& s )
 	return s->remote_endpoint().address();
 }
 
-inline Socket GetConnectSocket( const char* address , int port , int ms , bool progress )
+inline Socket GetConnectSocket(const char* address, int port, int ms, bool progress)
 {
-	char _port[128];
-	sprintf( _port , "%d" , port );
-	boost::asio::ip::tcp::resolver resolver( io_service );
-	boost::asio::ip::tcp::resolver::query query( address , _port );
-	boost::asio::ip::tcp::resolver::iterator iterator = resolver.resolve( query );
-	Socket s = new boost::asio::ip::tcp::socket( io_service );
-	boost::system::error_code ec;
-	long long sleepCount = 0;
-	do
-	{
-		boost::asio::connect( *s , resolver.resolve(query) , ec );
-		sleepCount++;
-		std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
-		if( progress && !(sleepCount%ms) ) printf( "." );
-	}
-	while( ec );
-	if( progress ) printf( "\n" ) , fflush( stdout );
-	return s;
+    char _port[128];
+    sprintf(_port, "%d", port);
+    
+    boost::asio::io_context io_context;
+    boost::asio::ip::tcp::resolver resolver(io_context);
+    boost::asio::ip::tcp::resolver::results_type results = resolver.resolve(address, _port);
+    
+    Socket s = new boost::asio::ip::tcp::socket(io_context);
+    boost::system::error_code ec;
+    long long sleepCount = 0;
+
+    do
+    {
+        boost::asio::connect(*s, results, ec);
+        sleepCount++;
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        if (progress && !(sleepCount % ms)) std::cout << ".";
+    }
+    while (ec);
+    
+    if (progress) std::cout << std::endl;
+    return s;
 }
 
-inline Socket GetConnectSocket( EndpointAddress address , int port , int ms , bool progress )
+inline Socket GetConnectSocket(EndpointAddress address, int port, int ms, bool progress)
 {
-	char _port[128];
-	sprintf( _port , "%d" , port );
-	boost::asio::ip::tcp::resolver resolver( io_service );
-	boost::asio::ip::tcp::resolver::query query( address.to_string().c_str() , _port );
-	boost::asio::ip::tcp::resolver::iterator iterator = resolver.resolve( query );
-	Socket s = new boost::asio::ip::tcp::socket( io_service );
-	boost::system::error_code ec;
-	long long sleepCount = 0;
-	do
-	{
-		boost::asio::connect( *s , resolver.resolve(query) , ec );
-		sleepCount++;
-		std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
-		if( progress && !(sleepCount%ms) ) std::cout << ".";
-	}
-	while( ec );
-	if( progress ) std::cout << std::endl;
-	return s;
+    char _port[128];
+    sprintf(_port, "%d", port);
+    
+    boost::asio::io_context io_context;
+    boost::asio::ip::tcp::resolver resolver(io_context);
+    boost::asio::ip::tcp::resolver::results_type results = resolver.resolve(address.to_string(), _port);
+    
+    Socket s = new boost::asio::ip::tcp::socket(io_context);
+    boost::system::error_code ec;
+    long long sleepCount = 0;
+
+    do
+    {
+        boost::asio::connect(*s, results, ec);
+        sleepCount++;
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        if (progress && !(sleepCount % ms)) std::cout << ".";
+    }
+    while (ec);
+    
+    if (progress) std::cout << std::endl;
+    return s;
 }
+
+
+// inline Socket GetConnectSocket( const char* address , int port , int ms , bool progress )
+// {
+// 	char _port[128];
+// 	sprintf( _port , "%d" , port );
+// 	boost::asio::ip::tcp::resolver resolver( io_service );
+// 	boost::asio::ip::tcp::resolver::query query( address , _port );
+// 	boost::asio::ip::tcp::resolver::iterator iterator = resolver.resolve( query );
+// 	Socket s = new boost::asio::ip::tcp::socket( io_service );
+// 	boost::system::error_code ec;
+// 	long long sleepCount = 0;
+// 	do
+// 	{
+// 		boost::asio::connect( *s , resolver.resolve(query) , ec );
+// 		sleepCount++;
+// 		std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
+// 		if( progress && !(sleepCount%ms) ) printf( "." );
+// 	}
+// 	while( ec );
+// 	if( progress ) printf( "\n" ) , fflush( stdout );
+// 	return s;
+// }
+
+// inline Socket GetConnectSocket( EndpointAddress address , int port , int ms , bool progress )
+// {
+// 	char _port[128];
+// 	sprintf( _port , "%d" , port );
+// 	boost::asio::ip::tcp::resolver resolver( io_service );
+// 	boost::asio::ip::tcp::resolver::query query( address.to_string().c_str() , _port );
+// 	boost::asio::ip::tcp::resolver::iterator iterator = resolver.resolve( query );
+// 	Socket s = new boost::asio::ip::tcp::socket( io_service );
+// 	boost::system::error_code ec;
+// 	long long sleepCount = 0;
+// 	do
+// 	{
+// 		boost::asio::connect( *s , resolver.resolve(query) , ec );
+// 		sleepCount++;
+// 		std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
+// 		if( progress && !(sleepCount%ms) ) std::cout << ".";
+// 	}
+// 	while( ec );
+// 	if( progress ) std::cout << std::endl;
+// 	return s;
+// }
 
 inline Socket AcceptSocket( AcceptorSocket listen )
 {
