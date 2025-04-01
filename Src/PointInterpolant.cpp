@@ -32,7 +32,8 @@ DAMAGE.
 #define USE_DOUBLE								// If enabled, double-precesion is used
 #define WEIGHT_DEGREE 2							// The order of the B-Spline used to splat in the weights for density estimation
 #define DEFAULT_FEM_DEGREE 2					// The default finite-element degree
-#define DEFAULT_FEM_BOUNDARY BOUNDARY_FREE		// The default finite-element boundary type
+// #define DEFAULT_FEM_BOUNDARY BOUNDARY_FREE
+#define DEFAULT_FEM_BOUNDARY BOUNDARY_NEUMANN	// The default finite-element boundary type
 #define DEFAULT_DIMENSION 2						// The dimension of the system
 
 #include <stdio.h>
