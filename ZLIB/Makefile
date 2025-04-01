@@ -1,8 +1,8 @@
 ZLIB_TARGET=libmyz.a
 ZLIB_SOURCE=adler32.c compress.c crc32.c deflate.c gzio.c infblock.c infcodes.c inffast.c inflate.c inftrees.c infutil.c trees.c uncompr.c zutil.c
 
-COMPILER ?= gcc
-#COMPILER ?= clang
+# COMPILER ?= gcc
+COMPILER ?= clang
 
 CFLAGS += -Wno-deprecated -Wno-write-strings
 

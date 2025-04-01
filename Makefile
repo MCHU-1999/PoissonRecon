@@ -26,8 +26,8 @@ RE_SOURCE=Reconstruction.example.cpp
 PTD_SOURCE=PointsToDisks.cpp
 SN_SOURCE=ScaleNormals.cpp
 
-COMPILER ?= gcc
-#COMPILER ?= clang
+# COMPILER ?= gcc
+COMPILER ?= clang
 
 ifeq ($(COMPILER),gcc)
 	CFLAGS += -fopenmp -Wno-deprecated -std=c++17 -pthread -Wno-invalid-offsetof
@@ -42,8 +42,20 @@ else
 	CFLAGS += -Wno-nan-infinity-disabled
 	LFLAGS += -lstdc++
 endif
+# Add include directories for the libraries
+CFLAGS += -I/opt/homebrew/Cellar/libpng/1.6.47/include
+CFLAGS += -I/opt/homebrew/Cellar/jpeg/9f/include
+CFLAGS += -I/opt/homebrew/Cellar/zlib/1.3.1/include
+CFLAGS += -I/opt/homebrew/Cellar/boost/1.87.0_1/include/
+
+# Add library search paths for the libraries
+LFLAGS_IMG += -L/opt/homebrew/Cellar/libpng/1.6.47/lib
+LFLAGS_IMG += -L/opt/homebrew/Cellar/jpeg/9f/lib
+LFLAGS_IMG += -L/opt/homebrew/Cellar/zlib/1.3.1/lib
+# LFLAGS_IMG += -L/opt/homebrew/Cellar/boost/1.87.0_1/lib/
 LFLAGS_IMG += -lz -lpng -ljpeg
-#LFLAGS += -ljpeg -lmypng -lz
+
+LFLAGS += -L/opt/homebrew/Cellar/boost/1.87.0_1/lib -lboost_system
 
 CFLAGS_DEBUG = -DDEBUG -g3
 LFLAGS_DEBUG =
